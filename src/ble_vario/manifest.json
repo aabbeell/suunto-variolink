@@ -1,0 +1,44 @@
+{
+  "name": "VarioLink for Suunto",
+  "version": "1.1",
+  "author": "O. Vitya",
+  "description": "UltraBip/BlueBip vario",
+  "type": "device",
+  "usage": "workout",
+  "modificationTime": 1791231951,
+  "in": [
+    { "name": "slp", "source": "Fusion/Altitude/SeaLevelPressure", "type": "subscribe" },
+    { "name": "walt", "source": "Fusion/Altitude", "type": "subscribe" },
+    { "name": "wvs", "source": "Fusion/Altitude/VerticalSpeed", "type": "subscribe" },
+    { "name": "spd", "source": "Activity/Current/Speed", "type": "subscribe" },
+    { "name": "um", "source": "Settings/Unit/UnitsMode", "type": "get" },
+    { "name": "la", "source": "Fusion/Location/GeoCoordinates.latitude", "type": "subscribe" },
+    { "name": "lo", "source": "Fusion/Location/GeoCoordinates.longitude", "type": "subscribe" }
+  ],
+  "out": [
+    { "name": "con" },
+    { "name": "vs", "log": true, "shownName": "Vario", "format": "VerticalSpeed_Fourdigits" },
+    { "name": "av", "log": true, "shownName": "Avg climb", "format": "VerticalSpeed_Fourdigits" },
+    { "name": "alt" },
+    { "name": "src", "log": true, "shownName": "Vario source", "format": "Count_Twodigits" },
+    { "name": "gn" },
+    { "name": "ft" },
+    { "name": "ws", "log": true, "shownName": "Wind speed", "format": "Speed_Fourdigits" },
+    { "name": "wd", "log": true, "shownName": "Wind from", "format": "CompassHeadingDeg_Fourdigits" },
+    { "name": "tx" },
+    { "name": "ty" },
+    { "name": "tn" }
+  ],
+  "template": [
+    { "name": "v.html" }
+  ],
+  "settings": [
+    { "shownName": "Vario model", "path": "dm", "type": "enum", "values": ["UltraBip", "BlueBip"] },
+    { "shownName": "Vario name (optional)", "path": "sn", "type": "string", "maxLength": 24 },
+    { "shownName": "Altitude reference", "path": "ar", "type": "enum", "values": ["Match watch altitude", "Watch sea-level pressure", "Standard (QNE)"] },
+    { "shownName": "Average climb window", "path": "aw", "type": "enum", "values": ["10 s", "15 s", "20 s", "30 s"] },
+    { "shownName": "Show sink in red below", "path": "sk", "type": "enum", "values": ["Off", "-1.5 m/s (-300 ft/min)", "-2.0 m/s (-390 ft/min)", "-2.5 m/s (-490 ft/min)", "-3.0 m/s (-590 ft/min)", "-3.5 m/s (-690 ft/min)"] },
+    { "shownName": "Bottom line", "path": "gp", "type": "enum", "values": ["Flight time", "Vario GPS speed and course (UltraBip only)"] },
+    { "shownName": "Pages", "path": "pg", "type": "enum", "values": ["Auto: glide, thermal (only app in mode)", "Classic single page"] }
+  ]
+}

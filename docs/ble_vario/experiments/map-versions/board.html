@@ -1,0 +1,150 @@
+<title>VarioLink Thermal Page Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;700&family=Barlow:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working board, six watch-face mockups in a grid, then the competitor survey as a reference table. */
+:root {
+  --bg: #f3f4f2; --panel: #ffffff; --fg: #15191a; --muted: #5b6568; --line: #d9dddc;
+  --lift: #d8261c; --sink: #1f6fd1; --core: #b89400;
+  --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b0d0e; --panel: #15191b; --fg: #e9eeee; --muted: #9aa5a8; --line: #2a3134;
+  --lift: #ff5a4e; --sink: #4fa2ff; --core: #f0cf3a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b0d0e; --panel: #15191b; --fg: #e9eeee; --muted: #9aa5a8; --line: #2a3134;
+  --lift: #ff5a4e; --sink: #4fa2ff; --core: #f0cf3a; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); }
+h2 { font-size: 26px; }
+h3 { font-size: 20px; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.face { width: 100%; max-width: 300px; aspect-ratio: 1; border-radius: 50%; background: #000; justify-self: center; display: block; }
+.tag { font: 500 13px var(--mono); color: var(--muted); }
+dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14.5px; }
+dt { color: var(--muted); }
+dd { margin: 0; }
+.mark { display: inline-block; width: .7em; height: .7em; border-radius: 2px; vertical-align: baseline; margin-right: 4px; }
+.lift { background: var(--lift); } .sink { background: var(--sink); } .core { background: var(--core); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: none; }
+td:first-child { font-weight: 600; white-space: nowrap; }
+a { color: var(--sink); }
+a:focus-visible { outline: 2px solid var(--sink); outline-offset: 2px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+ol, ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.note { font-size: 14px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">VarioLink · thermal page · brainstorm</div>
+    <h1>Six ways to draw the thermal page</h1>
+    <p class="lede">All six run in the SuuntoPlus simulator on the Race S display (466 px) with the same synthetic flight: a glide in from the west, then 22-second circles in a 5 m/s west wind with the core on the east side, captured 35 s into the climb. None of these is on the watch yet; the watch has the map test build (version A) from 12:46.</p>
+    <div class="legend">
+      <span><span class="mark lift"></span>lift</span>
+      <span><span class="mark sink"></span>sink</span>
+      <span><span class="mark core"></span>core marker</span>
+      <span>white cross / tick: you and your track</span>
+      <span>thin white loop: predicted next circle</span>
+    </div>
+  </header>
+
+  <section class="grid" aria-label="Versions">
+    <article class="card">
+      <img class="face" src="img/A.png" alt="Version A: full-screen colour trail with the climb small at the bottom">
+      <div class="tag">A · current build</div>
+      <h3>Colour trail</h3>
+      <dl><dt>Map</dt><dd>full screen, north up, centred on you</dd><dt>Trail</dt><dd>red/grey/blue by climb, darker with age</dd><dt>Fields</dt><dd>instant climb</dd><dt>Like</dt><dd>XCTrack, XC Guide, VARIO One</dd></dl>
+    </article>
+    <article class="card">
+      <img class="face" src="img/B.png" alt="Version B: trail with core marker, predicted circle, track line, wind arrow">
+      <div class="tag">B · pro marks</div>
+      <h3>Core and predicted turn</h3>
+      <dl><dt>Map</dt><dd>full screen, north up, centred on you</dd><dt>Trail</dt><dd>width and colour relative to this thermal's average</dd><dt>Marks</dt><dd>core circle, next-turn loop, track line, wind arrow</dd><dt>Fields</dt><dd>climb, TC, gain</dd><dt>Like</dt><dd>Skytraxx 5, XCTrack core ring</dd></dl>
+    </article>
+    <article class="card">
+      <img class="face" src="img/F.png" alt="Version F: like B but centred on the thermal core">
+      <div class="tag">F · B, core-centred</div>
+      <h3>Thermal stays still</h3>
+      <dl><dt>Map</dt><dd>centred on the core while circling, so you move around it</dd><dt>Marks</dt><dd>as B</dd><dt>Fields</dt><dd>climb, TC, gain</dd><dt>Like</dt><dd>XCSoar circling map</dd></dl>
+    </article>
+    <article class="card">
+      <img class="face" src="img/C.png" alt="Version C: big climb number on top, small grey trail with a red core ring">
+      <div class="tag">C · minimal core</div>
+      <h3>Big number, small map</h3>
+      <dl><dt>Top</dt><dd>instant climb, large</dd><dt>Map</dt><dd>small, faint grey trail, one red core ring</dd><dt>Fields</dt><dd>climb, TC</dd><dt>Like</dt><dd>Flymaster core dot, Suunto watch layouts</dd></dl>
+    </article>
+    <article class="card">
+      <img class="face" src="img/E.png" alt="Version E: climb, TC and gain on top, trail with core below">
+      <div class="tag">E · split</div>
+      <h3>Numbers on top, map below</h3>
+      <dl><dt>Top</dt><dd>climb large, TC and gain beside it</dd><dt>Map</dt><dd>lower half, width-coded trail, core ring, track line</dd><dt>Like</dt><dd>FlySkyHy, SeeYou Navigator</dd></dl>
+    </article>
+    <article class="card">
+      <img class="face" src="img/D.png" alt="Version D: polar thermal assistant with a lift lobe and the glider on the circle">
+      <div class="tag">D · assistant</div>
+      <h3>Polar lift diagram</h3>
+      <dl><dt>Drawing</dt><dd>grey circle = your turn; red lobe bulges where lift is strong; white ring = you</dd><dt>Use</dt><dd>widen toward the bulge, tighten past it</dd><dt>Fields</dt><dd>climb centre, TC and gain</dd><dt>Like</dt><dd>XCSoar thermal assistant, FlyMe</dd></dl>
+    </article>
+  </section>
+
+  <section class="cols" aria-label="What to decide">
+    <div class="card">
+      <h2>What the survey says</h2>
+      <ul>
+        <li>No watch product draws a thermal map today. Suunto's own Variometer, Tracerlink (Apple Watch, also reads the UltraBip) and the Wear OS varios are number tiles only.</li>
+        <li>The most praised big-screen designs draw few marks: a core circle, the predicted turn, lift as line width (Skytraxx 5, XCTrack).</li>
+        <li>Nearly everyone shows these while thermalling: instant climb (largest), altitude, thermal gain, average climb, wind, ground speed.</li>
+        <li>Almost all switch to the thermal page by themselves when circling starts, as VarioLink does.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Questions for the brainstorm</h2>
+      <ol>
+        <li>Map first (A, B, F) or number first (C, E)?</li>
+        <li>Keep the polar assistant (D) as an idea, or drop it?</li>
+        <li>Centre on you (B) or on the thermal (F)?</li>
+        <li>Which fields: climb, TC, gain, altitude, wind?</li>
+      </ol>
+      <p class="note">My pick: B as the base, with the TC and gain line, and F's core centring once the core is known.</p>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:14px" aria-label="Competitor survey">
+    <h2>Competitor thermal screens</h2>
+    <p class="lede">From manuals, store pages and reviews, checked 2026-10-04. The screenshot links open on the maker's or store's site.</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Product</th><th>Layout and fields</th><th>Drawing</th><th>Screens</th></tr></thead>
+        <tbody>
+          <tr><td>XCTrack</td><td>Top strip: vario, flight level, GS, baro altitude, clock. Left: climb-per-altitude ladder, distance to next waypoint. Top right: wind cone. Bottom: thermal gain, overview map, scale.</td><td>Track as circles sized or coloured by climb; blue core ring with its average climb; pilot arrow and bearing line; north up; ~120 m scale; switches in after 90° turn in 30 s at ≥ -0.5 m/s.</td><td><a href="https://www.fly-air3.com/wp-content/uploads/sites/15/2026/05/ThermalAssistant.png">TA page</a> · <a href="https://www.fly-air3.com/wp-content/uploads/sites/15/2025/03/thermal-assistant-with-strength.png">with strength</a></td></tr>
+          <tr><td>XCSoar</td><td>Circling map zooms in and centres on the thermal; thermal band; infoboxes: thermal average, gain, 30 s average.</td><td>Polar assistant: climb lobe around the circle, glider fixed at the left. Short vario-coloured trail, drift-compensated; green thermal locator.</td><td><a href="https://raw.githubusercontent.com/XCSoar/XCSoar/master/doc/manual/en/figures/dialog-thermal-assistant0.png">polar TA</a> · <a href="https://raw.githubusercontent.com/XCSoar/XCSoar/master/doc/manual/en/figures/shot-tlocator-circling.png">circling map</a></td></tr>
+          <tr><td>SeeYou Navigator / Oudie</td><td>Auto-zooming map; large average climb in the centre; flight time on top; bottom strip: GS, L/D, distance, target.</td><td>Track coloured by vario, or lift "bubbles" that drift downwind; a sound when lift is uneven within a turn.</td><td><a href="https://kb.naviter.com/wp-content/uploads/2021/03/thermal-assistant.jpg">KB image</a></td></tr>
+          <tr><td>Naviter Hyper</td><td>Vario ladder left; compass rose centre; large altitude and GS; small bearing, time, L/D.</td><td>Heading-up rose with loops inside; red arc on the lift side; yellow dot towards the last thermal.</td><td><a href="https://naviter.com/wp-content/uploads/2018/05/Hyper_front_ThermalAssistant-681x1024.png">thermal assistant</a></td></tr>
+          <tr><td>Skytraxx 5</td><td>Main or dedicated page, zoom on the arrow keys; gain or flight time, glide or averaged vario swap by phase; vario bars.</td><td>Dots thicker in lift; thin line projecting the current turn; core circle with drift. Keep the projected line inside the circle.</td><td><a href="https://www.skytraxx.eu/_files/ugd/f0fde3_e8215d95b70e4bfa93af99a5638e3bf2.pdf">manual pp. 36-38</a></td></tr>
+          <tr><td>Flymaster NAV SD / LIVE</td><td>Custom fields around a navigation circle: altitude gain, distance to thermal, double analog vario bar.</td><td>One black dot in the navigation wheel at the strongest lift, rim = 300 m.</td><td><a href="https://dnl.flymaster.net/Flymaster%20NAV%20SD%20manual%20EN%20v3.pdf">manual §3.1.5</a></td></tr>
+          <tr><td>FlySkyHy</td><td>Tiles: lift, altitude, height above ground, wind, GS, glide; moving map below.</td><td>Rotating map, trail red in climb and blue in sink, lift spots marked.</td><td><a href="https://flyskyhy.com/features.html">features</a></td></tr>
+          <tr><td>XC Guide</td><td>Top bar: altitude, speed, wind, climb, L/D; full map below.</td><td>Heading-up disk with track dots red to blue by climb and a scale ring.</td><td><a href="https://xcguide.app/assets/images/thermal-assist-xc-355x393.png">thermal assist</a></td></tr>
+          <tr><td>FlyMe</td><td>Full-screen ring, status bar, side climb bar.</td><td>Red and grey lift arcs on a compass ring; fading red rings of recent circles; heading chevron, wind sock.</td><td><a href="https://xcglobe.com/res/img/flyme/en/thermal-assistant2.png">thermal assistant</a></td></tr>
+          <tr><td>Syride SYS'Nav</td><td>3-4 large fields: track arrow, GS, altitude, airspace margin, big vario.</td><td>Thermal assistant on the XL only; base model has an acoustic thermal sniffer.</td><td><a href="https://cdn.shopify.com/s/files/1/0914/2973/2734/files/sysnav-flying-screens.jpg">screens</a></td></tr>
+          <tr><td>Tracerlink (Apple Watch)</td><td>Altitude top, large green vario with bar, glide, time, GS, wind; focus mode shows one value.</td><td>No map; optional haptic climb taps. Reads the UltraBip and BlueBip.</td><td><a href="https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/cc/b9/fc/ccb9fcd4-d01f-9e85-2096-16e3430441dd/Tracerlink_2_Screenshot_01.png/320x480bb.jpg">screenshot</a></td></tr>
+          <tr><td>Suunto Variometer</td><td>Round face: GS and altitude top, horizontal ±3 m/s bar, large last-thermal gain bottom.</td><td>No map; sound and vibration.</td><td><a href="https://www.suunto.com/contentassets/27606cca550544b0b0dcec3b94d221c1/red-bull-xalps.png">image</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Not found or no thermal screen: Stodeus BipLink (setup and logbook only), Garmin Connect IQ varios (number fields), COROS, Wear OS varios (number tiles), LK8000 (thermal pages and the experimental Thermal Orbiter, no published screenshot).</p>
+  </section>
+</div>

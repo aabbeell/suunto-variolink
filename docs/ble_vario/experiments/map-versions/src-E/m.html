@@ -1,0 +1,87 @@
+<!-- ABOUTME: Thermal map design versions for the brainstorm (simulator only): synthetic glide-in then 22-s circles in a 5 m/s -->
+<!-- ABOUTME: west wind with the core on the east side; VERSION picks the layout (A current, B pro, C minimal core, D assistant, E split). -->
+<uiView onLoad="
+  var V = 'E', T = 0, tok = 0, WE = 5, R = 60;
+  var px = 0, py = 0, pv = 0;
+  var at = function (s) {
+    var a;
+    if (s < 40) { px = -260 + 6.5 * s; py = -40 + s; pv = -1.2 + 0.3 * Math.sin(s * 0.7); return; }
+    s -= 40; a = s * 6.2832 / 22;
+    px = 5 * s + 25 * Math.sin(a); py = 25 * Math.cos(a) - 25;
+    pv = 1.2 + 1.7 * Math.cos(a - 1.2) + 0.25 * Math.sin(s * 1.3);
+  };
+  var COL = ['#2266FF', '#33B0FF', '#888888', '#FF9090', '#FF4040', '#FF0000'];
+  var bk = function (v) { return v <= -2 ? 0 : (v <= -0.7 ? 1 : (v < 0.3 ? 2 : (v < 1.5 ? 3 : (v < 2.5 ? 4 : 5)))); };
+  var now = 0, ox = 0, oy = 0, w2 = 0, h2 = 0, sc = 1, X = 0, Y = 0;
+  var P = function (a) { at(now - a); X = w2 + (px + WE * a - ox) * sc; Y = h2 - (py - oy) * sc; };
+  var fmt = function (v) { var t = Math.round(v * 10); return (t > 0 ? '+' : (t < 0 ? '-' : '')) + Math.floor(Math.abs(t) / 10) + '.' + Math.abs(t) % 10; };
+  var shade = function (c, f) { var r = parseInt(c.substr(1, 2), 16), g = parseInt(c.substr(3, 2), 16), b = parseInt(c.substr(5, 2), 16);
+    var h = function (x) { x = Math.round(x * f).toString(16); return x.length < 2 ? '0' + x : x; }; return '#' + h(r) + h(g) + h(b); };
+  // trail: mode 0 colour+fade (A), 1 width by lift relative to thermal avg (B), 2 faint grey (C)
+  var trail = function (c, mode, avg) {
+    var a, st, b, k, q = -1, n = 0, w;
+    for (a = 110; a > 0; a -= st) {
+      st = a > 60 ? 3 : (a > 30 ? 2 : 1);
+      if (now - a < 0) continue;
+      at(now - a + st / 2);
+      if (mode === 2) { b = 'g'; w = 2; k = '#555555'; }
+      else if (mode === 1) { w = pv > avg + 0.6 ? 9 : (pv > avg - 0.2 ? 5 : 2); k = pv < 0 ? '#33B0FF' : (pv > avg + 0.6 ? '#FF2020' : (pv > avg - 0.2 ? '#FF9060' : '#999999')); b = k + w; }
+      else { b = bk(pv); w = b > 2 ? 6 : 3; k = shade(COL[b], a > 60 ? 0.45 : (a > 25 ? 0.7 : 1)); b = k; }
+      if (b !== q || n > 18) { if (q !== -1) c.stroke(); c.beginPath(); c.strokeStyle = k; c.lineWidth = w; P(a); c.moveTo(X, Y); q = b; n = 0; }
+      P(a - st); c.lineTo(X, Y); n++;
+    }
+    if (q !== -1) c.stroke();
+  };
+  var cross = function (c) { c.beginPath(); c.strokeStyle = '#FFFFFF'; c.lineWidth = 3; c.moveTo(w2 - 6, h2); c.lineTo(w2 + 6, h2); c.moveTo(w2, h2 - 6); c.lineTo(w2, h2 + 6); c.stroke(); };
+  var north = function (c) { c.beginPath(); c.strokeStyle = '#FFFFFF'; c.lineWidth = 2; c.moveTo(w2, 2); c.lineTo(w2, 12); c.stroke(); };
+  var track = function (c) { var x0, y0, dx, dy, l; P(1); x0 = X; y0 = Y; P(0); dx = X - x0; dy = Y - y0; l = Math.sqrt(dx * dx + dy * dy) || 1;
+    c.beginPath(); c.strokeStyle = '#FFFFFF'; c.lineWidth = 3; c.moveTo(w2, h2); c.lineTo(w2 + dx / l * 34, h2 + dy / l * 34); c.stroke();
+    c.beginPath(); c.lineWidth = 3; c.moveTo(w2 - 7, h2 - 7); c.lineTo(w2 + 7, h2 + 7); c.moveTo(w2 + 7, h2 - 7); c.lineTo(w2 - 7, h2 + 7); c.stroke(); };
+  // climb-weighted centroid of above-average points over the last 33 s (1.5 circles)
+  var CX = 0, CY = 0, CV = 0, TCv = 0, GN = 0;
+  var stats = function () { var a, sx = 0, sy = 0, sw = 0, s = 0, n = 0; for (a = 0; a < 33; a++) { at(now - a); s += pv; n++; } TCv = s / n;
+    for (a = 0; a < 33; a++) { P(a); if (pv > TCv) { sx += X * (pv - TCv); sy += Y * (pv - TCv); sw += pv - TCv; } } CX = sx / sw; CY = sy / sw; CV = sw / 33;
+    GN = Math.max(0, (now - 40) * 1.2); };
+  var poly = function (c, x, y, r, n, col, w) { var i; c.beginPath(); c.strokeStyle = col; c.lineWidth = w;
+    for (i = 0; i <= n; i++) { if (i) c.lineTo(x + r * Math.cos(i * 6.2832 / n), y + r * Math.sin(i * 6.2832 / n)); else c.moveTo(x + r, y); } c.stroke(); };
+  var predict = function (c) { var k; c.beginPath(); c.strokeStyle = '#FFFFFF'; c.lineWidth = 1;
+    for (k = 0; k <= 22; k += 2) { at(now + k); X = w2 + (px - WE * k - ox) * sc; Y = h2 - (py - oy) * sc; if (k) c.lineTo(X, Y); else c.moveTo(X, Y); } c.stroke(); };
+  var windArrow = function (c) { var x = w2 * 1.75, y = h2 * 0.35; c.beginPath(); c.strokeStyle = '#AAAAAA'; c.lineWidth = 3;
+    c.moveTo(x - 18, y); c.lineTo(x + 18, y); c.moveTo(x + 18, y); c.lineTo(x + 8, y - 8); c.moveTo(x + 18, y); c.lineTo(x + 8, y + 8); c.stroke(); };
+  var rimChevron = function (c, ang) { var r = Math.min(w2, h2) - 4, x = w2 + r * Math.sin(ang), y = h2 - r * Math.cos(ang), px2 = Math.cos(ang), py2 = Math.sin(ang);
+    c.beginPath(); c.strokeStyle = '#FF2020'; c.lineWidth = 5; c.moveTo(x - px2 * 12 - Math.sin(ang) * 14, y - py2 * 12 + Math.cos(ang) * 14); c.lineTo(x, y); c.lineTo(x + px2 * 12 - Math.sin(ang) * 14, y + py2 * 12 + Math.cos(ang) * 14); c.stroke(); };
+  var assistant = function (c) { var i, ang, v, r0 = Math.min(w2, h2) * 0.42, k = Math.min(w2, h2) * 0.13, cx, cy, s0 = now - 40;
+    poly(c, w2, h2, r0, 24, '#444444', 2);
+    c.beginPath(); c.strokeStyle = '#FF4040'; c.lineWidth = 5;
+    for (i = 0; i <= 16; i++) { ang = i * 6.2832 / 16; v = 1.2 + 1.7 * Math.cos(ang - 1.2); cx = w2 + (r0 + k * (v - 1.2)) * Math.sin(ang); cy = h2 - (r0 + k * (v - 1.2)) * Math.cos(ang);
+      if (i) c.lineTo(cx, cy); else c.moveTo(cx, cy); } c.stroke();
+    ang = (s0 * 6.2832 / 22) % 6.2832; cx = w2 + r0 * Math.sin(ang); cy = h2 - r0 * Math.cos(ang);
+    poly(c, cx, cy, 9, 8, '#FFFFFF', 4); };
+  var draw = function (c) {
+    w2 = c.width / 2; h2 = c.height / 2; sc = (Math.min(w2, h2) - 6) / R; now = 20 + (T % 120); at(now); ox = px; oy = py; stats();
+    if (V === 'D') { assistant(c); north(c); return; }
+    if (V === 'A') { trail(c, 0, 0); cross(c); north(c); return; }
+    if (V === 'B') { trail(c, 1, TCv); predict(c); if (now > 62) poly(c, CX, CY, 8 + 6 * CV, 8, '#FFFF00', 3); track(c); north(c); windArrow(c); return; }
+    if (V === 'C') { trail(c, 2, 0); if (now > 62) { poly(c, CX, CY, 14, 10, '#FF2020', 8); } track(c); north(c); return; }
+    if (V === 'E') { trail(c, 1, TCv); if (now > 62) poly(c, CX, CY, 7, 8, '#FFFF00', 3); track(c); north(c); return; }
+  };
+  var tick = function (v) { if (isFinite(v)) T = v; now = 20 + (T % 120); at(now); var cur = pv; stats();
+    if (V === 'A') setText('#t1', fmt(cur) + ' m/s');
+    if (V === 'B') { setText('#t1', fmt(cur)); setText('#t2', 'TC ' + fmt(TCv) + '   ' + Math.round(GN) + 'm'); }
+    if (V === 'C') { setText('#t1', fmt(cur)); setText('#t2', 'TC ' + fmt(TCv)); }
+    if (V === 'D') { setText('#t1', fmt(cur)); setText('#t2', 'TC ' + fmt(TCv) + '   ' + Math.round(GN) + 'm'); }
+    if (V === 'E') { setText('#t1', fmt(cur)); setText('#t2', 'TC ' + fmt(TCv)); setText('#t3', Math.round(GN) + ' m'); }
+    try { control('#map', 'REFRESH'); } catch (e) {} };
+"
+onActivate="
+  try { tok = $.subscribe('Zapp/{zapp_index}/Output/tk', tick); } catch (e) {}
+  try { $.get('Zapp/{zapp_index}/Output/tk', tick); } catch (e) {}
+"
+onDeactivate="if (tok) { try { $.unsubscribe(tok); } catch (e) {} } tok = 0;">
+  <div style="width:100%;height:100%;background-color:#000000;">
+    <div id="t1" class="sp-d-l f-num" style="top:16%;left:14%;">--</div>
+    <div id="t2" class="sp-t-s" style="top:22%;left:58%;">--</div>
+    <div id="t3" class="sp-t-s" style="top:30%;left:58%;">--</div>
+    <object id="map" type="canvas" build="ctx => draw(ctx)" style="position:absolute;top:40%;left:10%;width:80%;height:56%;" />
+  </div>
+</uiView>

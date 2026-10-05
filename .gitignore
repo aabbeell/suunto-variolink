@@ -1,0 +1,11 @@
+.env
+.DS_Store
+node_modules/
+
+# SuuntoPlus build outputs land next to source by default — keep src/ clean
+src/**/*.fea
+src/**/*.dev
+src/**/*.zip
+
+# Packaged VS Code extensions
+*.vsix

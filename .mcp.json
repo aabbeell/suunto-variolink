@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "suunto-vscode": {
+      "type": "http",
+      "url": "http://127.0.0.1:39317/mcp"
+    }
+  }
+}

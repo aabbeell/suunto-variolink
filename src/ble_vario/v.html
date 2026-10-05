@@ -1,0 +1,131 @@
+<!-- ABOUTME: The VarioLink screen: link status, climb, A row (AVG/GS, GAIN), altitude and C2 slot, bottom line, thermal map. -->
+<!-- ABOUTME: main.js makes the classic, GLIDE and THERMAL (map) pages from it by element id; the trail is drawn here. -->
+<uiView onLoad="
+  // Thermal map trail: main.js sends tx, ty (metres east, north of the first fix) and tn = tick*16 + 8 on the map
+  // page + lift bucket (0-5, 7 = no fresh fix). The ring keeps 240 s; the canvas draws it north up around the glider.
+  var N = 240, TX = 0, TB = 0, lt = -1, CX = 0, CY = 0, R = 45, tok = [0, 0, 0],
+    COL = 0, BAS = [0x2266FF, 0x33B0FF, 0x888888, 0xFF9090, 0xFF4040, 0xFF0000], FADE = [1, 0.72, 0.48, 0.28];
+  // the dot colours, bucket * 4 + age band, each base colour darkened for older dots (on black this reads as fading)
+  var cols = function () {
+    var i, f, v, r, t = [];
+    for (i = 0; i < 24; i++) {
+      v = BAS[i >> 2]; f = FADE[i & 3];
+      r = (Math.round((v >> 16) * f) << 16) + (Math.round((v >> 8 & 255) * f) << 8) + Math.round((v & 255) * f);
+      t.push('#' + (0x1000000 + r).toString(16).slice(1));
+    }
+    return t;
+  };
+  var fx = function (v) { if (isFinite(v)) CX = v; };
+  var fy = function (v) { if (isFinite(v)) CY = v; };
+  var fn = function (v) {
+    var t, b, j;
+    if (!isFinite(v)) return;
+    t = Math.floor(v / 16);
+    b = v - t * 16;
+    if (!(t > lt)) return;
+    if (!TB) { TX = new Float32Array(480); TB = new Uint8Array(240); } // only once the XC pages send points
+    if (lt >= 0) for (j = lt + 1; j < t && j <= lt + N; j++) TB[j % N] = 7; // missed ticks are gaps
+    j = t % N;
+    TX[j * 2] = CX;
+    TX[j * 2 + 1] = CY;
+    TB[j] = b & 7;
+    lt = t;
+    if (b > 7) { try { control('#map', 'REFRESH'); } catch (e) {} } // redraw only on the map page
+  };
+  // Round dots (round line caps on a near-zero segment), newest first: one per second (every 2nd/3rd when older), bigger
+  // and redder in stronger lift, fading in 4 steps with age. The core (climb-weighted centre of the lift dots of the
+  // last 33 s, weight = lift step squared) becomes the map centre; its yellow ring has the radius of the lift area
+  // (0.7 x the weighted RMS distance of the lift dots from the centre) and is thicker the more lift the estimate rests on.
+  var W2 = 0, H2 = 0, SC = 1, OX = 0, OY = 0, CR = 0, CW = 0, SZ = [6, 6, 5, 9, 14, 19], PX = NaN, PY = 0, PR = NaN, KX = 0, KY = 0;
+  var px = function (j) { return W2 + (TX[j * 2] - OX) * SC; };
+  var py = function (j) { return H2 - (TX[j * 2 + 1] - OY) * SC; };
+  var core = function (h) { // sets OX/OY to the core and returns 1, or leaves them on the newest point
+    var a, j, b, sx = 0, sy = 0, sw = 0;
+    for (a = 0; a < 33; a++) { j = (h - a + N) % N; b = TB[j]; if (b > 2 && b < 7) { b = (b - 2) * (b - 2); sx += TX[j * 2] * b; sy += TX[j * 2 + 1] * b; sw += b; } }
+    if (sw < 20) return 0;
+    OX = sx / sw; OY = sy / sw;
+    for (CR = 0, a = 0; a < 33; a++) { j = (h - a + N) % N; b = TB[j]; if (b > 2 && b < 7) { sx = TX[j * 2] - OX; sy = TX[j * 2 + 1] - OY; CR += (sx * sx + sy * sy) * (b - 2) * (b - 2); } }
+    CR = 0.7 * Math.sqrt(CR / sw); // the strong-lift spread, weighted by the square of the lift step
+    CW = sw > 150 ? 4 : (sw > 90 ? 3 : 2);
+    return 1;
+  };
+  var marks = function (c, h, k) { // the core ring, then the glider: a cross and a 30-px line along its track
+    var i, x = px(h), y = py(h), dx = x - px((h + N - 1) % N), dy = y - py((h + N - 1) % N), l = Math.sqrt(dx * dx + dy * dy) || 1;
+    if (k) { c.beginPath(); c.strokeStyle = '#FFFF00'; c.lineWidth = CW; k = Math.max(8, Math.min(CR * SC, H2 * 0.6));
+      x = W2 + (KX - OX) * SC; y = H2 - (KY - OY) * SC; // the core, which the view centre follows only in steps
+      for (i = 0; i < 17; i++) { if (i) c.lineTo(x + k * Math.cos(i * 0.3927), y + k * Math.sin(i * 0.3927)); else c.moveTo(x + k, y); } c.stroke();
+      x = px(h); y = py(h); }
+    c.beginPath(); c.strokeStyle = '#FFFFFF'; c.lineWidth = 3;
+    c.moveTo(x - 7, y - 7); c.lineTo(x + 7, y + 7); c.moveTo(x + 7, y - 7); c.lineTo(x - 7, y + 7);
+    c.moveTo(x, y); c.lineTo(x + dx / l * 30, y + dy / l * 30); c.moveTo(W2, 2); c.lineTo(W2, 12); c.stroke();
+  };
+  var fit = function (h) { // the view radius in metres: the farthest of the last 25 points (about one circle) from the centre, plus 10 %
+    var a, j, x, y, m = 0;
+    for (a = 0; a < 25; a++) { j = (h - a + N) % N; if (TB[j] < 7) { x = TX[j * 2] - OX; y = TX[j * 2 + 1] - OY; x = x * x + y * y; if (x > m) m = x; } }
+    m = Math.sqrt(m) * 1.1;
+    return m < 25 ? 25 : (m > 150 ? 150 : m);
+  };
+  var draw = function (c) {
+    var h, a, j, b, w, q = -1, u = 0, k, x, y, d;
+    if (lt < 0) return;
+    W2 = c.width / 2; H2 = c.height / 2; SC = (Math.min(W2, H2) - 6) / R; d = W2 / 186; // dot sizes scale with the display
+    h = lt % N; OX = TX[h * 2]; OY = TX[h * 2 + 1];
+    k = core(h);
+    KX = OX; KY = OY;
+    // A steady picture: the view radius (the last 25 s around the core or glider, 25-150 m) changes only by more than
+    // 25 %, and the centre moves only when the target is more than 0.3 of the radius away, so the dots stay put.
+    a = fit(h);
+    if (PR !== PR || a > PR * 1.25 || a < PR * 0.75) PR = a;
+    if (PX !== PX || (OX - PX) * (OX - PX) + (OY - PY) * (OY - PY) > 0.09 * PR * PR) { PX = OX; PY = OY; }
+    OX = PX; OY = PY;
+    SC = (Math.min(W2, H2) - 6) / PR;
+    if (!COL) COL = cols();
+    c.lineCap = 'round';
+    for (a = 0; a < 200 && u < 130; a += a < 60 ? 1 : 2) {
+      j = (h - a + N) % N;
+      b = TB[j];
+      if (b > 6) continue;
+      w = b * 4 + (a > 90 ? 3 : (a > 45 ? 2 : (a > 20 ? 1 : 0)));
+      if (w !== q) { if (q >= 0) { c.stroke(); u += 2; } c.beginPath(); c.strokeStyle = COL[w]; c.lineWidth = SZ[b] * d; q = w; }
+      x = px(j); y = py(j);
+      c.moveTo(x, y); c.lineTo(x + 0.1, y); u += 2;
+    }
+    if (q >= 0) c.stroke();
+    c.lineCap = 'butt';
+    marks(c, h, k);
+  };
+"
+onActivate="
+  $.put('/Zapp/{zapp_index}/Event', 1, null, 'int32');
+  for (var i = 0; i < 3; i++) { if (tok[i]) { try { $.unsubscribe(tok[i]); } catch (e) {} } tok[i] = 0; } // an activation without onDeactivate
+  try { tok[0] = $.subscribe('Zapp/{zapp_index}/Output/tx', fx); } catch (e) {}
+  try { tok[1] = $.subscribe('Zapp/{zapp_index}/Output/ty', fy); } catch (e) {}
+  try { tok[2] = $.subscribe('Zapp/{zapp_index}/Output/tn', fn); } catch (e) {}
+"
+onDeactivate="
+  for (var i = 0; i < 3; i++) { if (tok[i]) { try { $.unsubscribe(tok[i]); } catch (e) {} } tok[i] = 0; }
+">
+  <div id="suuntoplus">
+    <div id="s0" class="sp-t-s c-green p-hc" style="top:5%;visibility:hidden;">{{vario}}</div>
+    <div id="s2" class="sp-t-s c-orange p-hc" style="top:5%;">{{watch}}</div>
+    <div id="la" class="sp-t-s cm-mid" style="top:13%;left:15%;">{{avg}}</div>
+    <div id="bt" class="sp-t-s c-yellow p-hc" style="top:13%;visibility:hidden;">DEMO</div>
+    <div id="lg" class="sp-t-s cm-mid" style="top:13%;left:62%;">{{gain}}</div>
+    <div id="av" class="sp-d-s f-num" style="top:17%;left:15%;">--</div>
+    <div id="gn" class="sp-text-bottom" style="top:17%;left:62%;"><span class="sp-d-s f-num"><eval input="Zapp/{zapp_index}/Output/gn" outputFormat="Altitude_Fivedigits" default="--" /></span><span class="sp-t-s cm-mid"><postfix /></span></div>
+    <div id="h0" class="sp-b-s cm-mid p-hc" style="top:20%;visibility:hidden;">{{h_on}}</div>
+    <div id="h1" class="sp-b-s cm-mid p-hc" style="top:27%;visibility:hidden;">{{h_app}}</div>
+    <div id="vn" class="sp-text-bottom p-hc" style="top:25%;"><span id="nm" class="sp-d-xxl f-num">--</span><span class="sp-t-s cm-mid" style="padding-left:6px;">m/s</span></div>
+    <div id="vi" class="sp-text-bottom p-hc" style="top:29%;visibility:hidden;"><span id="ni" class="sp-d-xl f-num">--</span><span class="sp-t-s cm-mid" style="padding-left:6px;">ft/min</span></div>
+    <div id="ll" class="sp-t-s cm-mid" style="top:71.5%;left:12%;">{{alt}}</div>
+    <div id="ac" class="sp-text-bottom p-hc" style="top:65.5%;"><span class="sp-d-s f-num"><eval input="Zapp/{zapp_index}/Output/alt" outputFormat="Altitude_Fivedigits" default="--" /></span><span class="sp-t-s cm-mid"><postfix /></span></div>
+    <div id="ax" class="sp-text-bottom" style="top:65.5%;left:21%;visibility:hidden;"><span class="sp-d-s f-num"><eval input="Zapp/{zapp_index}/Output/alt" outputFormat="Altitude_Fivedigits" default="--" /></span><span class="sp-t-s cm-mid"><postfix /></span></div>
+    <div id="cv" class="sp-text-bottom" style="top:67%;left:62%;visibility:hidden;"><span id="cw" class="sp-d-xs f-num">--</span><span id="cl" class="sp-t-s cm-mid">-</span></div>
+    <div id="fl" class="sp-text-bottom p-hc" style="top:83%;visibility:hidden;"><span class="sp-t-s cm-mid">{{flt}}</span><span class="sp-d-xs f-num" style="padding-left:8px;"><eval input="Zapp/{zapp_index}/Output/ft" outputFormat="Duration_FourdigitsFixed" default="--" /></span></div>
+    <div id="rs" class="sp-t-s c-orange p-hc" style="top:85%;">{{srch}}</div>
+    <div id="gp" class="sp-t-s p-hc" style="top:85%;visibility:hidden;">--</div>
+    <div id="mp" style="position:absolute;top:3%;left:10%;width:80%;height:47%;visibility:hidden;"><object id="map" type="canvas" build="ctx => draw(ctx)" style="width:100%;height:100%;" /></div>
+    <div id="ml" class="sp-d-l f-num p-hc" style="top:46%;visibility:hidden;">--</div>
+    <div id="mg" class="sp-t-l p-hc" style="top:74%;visibility:hidden;">--</div>
+  </div>
+</uiView>

@@ -1,0 +1,12 @@
+{
+  "name": "VL Map Preview",
+  "version": "0.1",
+  "author": "O. Vitya",
+  "description": "Thermal map preview",
+  "type": "feature",
+  "usage": "workout",
+  "modificationTime": 1791110000,
+  "in": [],
+  "out": [ { "name": "tk" } ],
+  "template": [ { "name": "m.html" } ]
+}
