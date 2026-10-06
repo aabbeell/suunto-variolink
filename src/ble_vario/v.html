@@ -128,4 +128,8 @@ onDeactivate="
     <div id="ml" class="sp-d-l f-num p-hc" style="top:46%;visibility:hidden;">--</div>
     <div id="mg" class="sp-t-l p-hc" style="top:74%;visibility:hidden;">--</div>
   </div>
+  <userInput>
+    <pushButton name="up" longType="action" onLongPressStart="$.put('/Zapp/{zapp_index}/Event', 2, null, 'int32');" />
+    <pushButton name="down" longType="action" onLongPressStart="$.put('/Zapp/{zapp_index}/Event', 2, null, 'int32');" />
+  </userInput>
 </uiView>

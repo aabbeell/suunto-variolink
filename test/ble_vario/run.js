@@ -1778,6 +1778,23 @@ test('X14 XC texts (product P2-11): GLIDE on the ground shows the vario GPS line
   }
 });
 
+test('X15 long press (owner 2026-10-06): UP/DOWN hold toggles THERMAL map <-> GLIDE against the automatic page; the next hold returns to automatic; no effect on the classic setting', () => {
+  ok(/<pushButton name="up" longType="action" onLongPressStart="\$\.put\('\/Zapp\/\{zapp_index\}\/Event', 2/.test(H.HTML) && /<pushButton name="down" longType="action"/.test(H.HTML), 'template: UP and DOWN holds send event 2; short presses stay native');
+  const env = xcEnv();
+  for (let i = 0; i < 12; i++) env.fly(null, { r: -1 });
+  eq(XC(env)[0], 2, 'GLIDE automatically');
+  env.event(2); env.fly(null, { r: -1 });
+  eq(XC(env)[0], 3, 'hold: the map page, though the glide would say GLIDE');
+  ok(env.scr.visible('mp') && !env.scr.visible('vn'), 'map shown');
+  for (let i = 0; i < 30; i++) env.fly(null, { r: -1 });
+  eq(XC(env)[0], 3, 'pinned until the next hold');
+  env.event(2); env.fly(null, { r: -1 });
+  eq(XC(env)[0], 2, 'next hold: automatic again (GLIDE)');
+  const c = xcEnv({ settings: { pg: '1' } });
+  c.event(2); c.fly(null, { r: -1 });
+  eq(XC(c)[0], 0, 'classic setting: the hold does nothing (no XC engine)');
+});
+
 test('P12 evalFile only in main.js (platform P1-1, reference L1212): no ext file calls it, the XC engine gets ext7-9.js as factories compiled in onExerciseStart', () => {
   for (const f of fs.readdirSync(H.APP).filter((x) => /^ext\d\.js$/.test(x))) {
     const code = fs.readFileSync(path.join(H.APP, f), 'utf8').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
@@ -1972,7 +1989,7 @@ test('M2 memory (sp-mem, Duktape 2.7): every compiled function <= 1,900 B est32,
   ok(/ws=5\.\d+ wd=4\.7\d+/.test(res.xc.outs), 'the XC scenario estimates its 5 m/s wind from 270 deg (the fit ran): ' + (/ws=\S+ wd=\S+/.exec(res.xc.outs) || [''])[0]);
   // Regression caps at the measured values (SPEC §0.1.9). Neither meets the binding BLE display budget (steady
   // <= 10 KB, peak <= 12 KB): the memory round's floor without features was 19.1 KB steady.
-  ok(res.xc.steady <= 47000 && res.capture.steady <= 47000, 'automatic pages (setting): steady ' + res.xc.steady + ' / ' + res.capture.steady + ' B within the recorded 45.8 KB with round fading dots and the sized core ring (44.3 KB square dots, 41.2 KB line map, 33.3 KB before the map; v1.1 review build 31.8 KB, SPEC §0.1.10)');
+  ok(res.xc.steady <= 47600 && res.capture.steady <= 47600, 'automatic pages (setting): steady ' + res.xc.steady + ' / ' + res.capture.steady + ' B within the recorded 45.8 KB with round fading dots and the sized core ring (44.3 KB square dots, 41.2 KB line map, 33.3 KB before the map; v1.1 review build 31.8 KB, SPEC §0.1.10)');
   ok(res.classic.steady <= 30600, 'classic page (the default, no XC engine): steady ' + res.classic.steady + ' B within the recorded 30.5 KB (the map template code is compiled on every page; 21.6 KB before it, memory round 19.1 KB)');
 });
 

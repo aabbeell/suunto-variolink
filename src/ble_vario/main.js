@@ -41,6 +41,8 @@ var S, conn = 0, wasConn = 0, cv = -1, nf = 0, everValid = 0, nBad = 0, got = 0;
 // east/north of the exercise's first fix minus the wind drift so far (the thermal map's trail, in the air mass).
 // The engine keeps its heights on one altitude basis across vario/watch source switches (ext8.js).
 var XC = new Float32Array(16);
+// mo: the page pinned by a long press of UP or DOWN (0 automatic, 2 GLIDE, 3 THERMAL map); the next hold unpins it
+var mo = 0;
 //@demo var seenEv = 0, demo = 0, dg; // any BLE event seen, demo running, its feed (ext4.js)
 //@dbg var nOk = 0, nMax = 0, uId = 0, uLog = 0; // LK8EX1 lines accepted, largest notification, unknown sentence id to log, last logged
 // ---- tick bins (LK8EX1 pressure and vario) and the last vario-GPS fix ($GPRMC) ----
@@ -461,6 +463,7 @@ function evaluate(input, output) {
   dat(input.walt, input.wvs, input.slp);
   fly(input.spd);
   if (S.e) S.e(input.la, input.lo, tk, alt, air, th, st && !pz, input.walt, src); // XC engine (GPS fixes, circling, wind, pages)
+  if (S.e && mo) XC[0] = mo; // a long press overrides the automatic page until the next one
   //@map if (S.e) XC[0] = 3; // hardware check (variant map): the thermal map page from the exercise start, no circling needed
   put(output);
   //@dbg if (!(tk % 10)) ble(-1, 0); // the 10-tick line [vl] <state> <ok> <bad> <maxlen> <phase> <step> <rg> <fm> <air> <page> <circling> <fix age> <wind>
@@ -497,6 +500,7 @@ function getUserInterface() {
 // The debug line lets hardware check H11 confirm that an onActivate $.put reaches main.js.
 function onEvent(input, output, id) {
   uiT = 0;
+  if (id == 2 && S.e) mo = mo ? 0 : (XC[0] == 3 ? 2 : 3); // long press (template userInput): map <-> GLIDE, then automatic again
   //@dbg systemEvent('[vl] onEvent ' + id);
 }
 
