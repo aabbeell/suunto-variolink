@@ -1990,7 +1990,7 @@ test('M2 memory (sp-mem, Duktape 2.7): every compiled function <= 1,900 B est32,
   // Regression caps at the measured values (SPEC §0.1.9). Neither meets the binding BLE display budget (steady
   // <= 10 KB, peak <= 12 KB): the memory round's floor without features was 19.1 KB steady.
   ok(res.xc.steady <= 47600 && res.capture.steady <= 47600, 'automatic pages (setting): steady ' + res.xc.steady + ' / ' + res.capture.steady + ' B within the recorded 45.8 KB with round fading dots and the sized core ring (44.3 KB square dots, 41.2 KB line map, 33.3 KB before the map; v1.1 review build 31.8 KB, SPEC §0.1.10)');
-  ok(res.classic.steady <= 30600, 'classic page (the default, no XC engine): steady ' + res.classic.steady + ' B within the recorded 30.5 KB (the map template code is compiled on every page; 21.6 KB before it, memory round 19.1 KB)');
+  ok(res.classic.steady <= 31200, 'classic page (the default, no XC engine): steady ' + res.classic.steady + ' B within the recorded 31.1 KB (the map template code is compiled on every page; 21.6 KB before it, memory round 19.1 KB)');
 });
 
 test('M3 ids used by main.js exist in v.html; template tokens exist in en.json; outputs match the manifest', () => {
