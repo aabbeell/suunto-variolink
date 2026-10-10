@@ -531,7 +531,7 @@ test('A5 formatting and colour tiers for every sink setting', () => {
 // ======================= BLE =======================
 const SVC16 = [0xFB, 0x34, 0x9B, 0x5F, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xE0, 0xFF, 0x00, 0x00];
 const CHR16 = SVC16.slice(0, 12).concat([0xE1, 0xFF, 0x00, 0x00]);
-test('B1 BLE flow: connect by name, register both UUID forms after 100, notify, data, 101, reconnect re-enables only', () => {
+test('B1 BLE flow: connect by name, register both UUID forms after 100, notify, data, 101, reconnect registers again and re-enables', () => {
   const env = makeEnv();
   env.load();
   ok(env.logs.length === 0);
@@ -582,7 +582,11 @@ test('B1 BLE flow: connect by name, register both UUID forms after 100, notify, 
   eq(env.calls.length, nCalls, 'no calls while waiting for the system reconnect');
   env.ble(0, 100);
   env.tick();
-  eq(env.callsNamed('regUuid').length, 2, 'not registered again');
+  env.tick();
+  eq(env.callsNamed('regUuid').length, 4, 'both forms registered again (Race S 2026-10-10: after 101/100 the old registration is gone, enaCharNotf only got 110)');
+  env.ble(1, 107);
+  env.ble(2, 107);
+  env.tick();
   eq(env.callsNamed('enaCharNotf').length, 2, 'notifications re-enabled after the reconnect');
   eq(JSON.stringify(env.callsNamed('enaCharNotf')[1].args), '[3,1]', 'on the form that delivered data');
   lkTick(env, 1000, 1000, 50); env.tick();
@@ -648,7 +652,7 @@ test('B8 regUuid throws on the 16-byte form (platform P1): retried once, marked 
   env.step(3);
   env.ble(0, 100);
   env.step(6);
-  eq(env.n.reg[1] + env.n.reg[2], 3, 'a reconnect does not register again');
+  eq(env.n.reg[1], 2, 'a reconnect registers form 1 again (the watch drops the registration on a 101)');
   eq(JSON.stringify(env.enas()), '[1,1]', 'it re-enables notifications on form 1');
   eq(env.state('ls'), 2, 'LIVE again');
   eq(env.handlerAppCalls, 0);
@@ -809,7 +813,7 @@ test('B16 a link flap between the two UUID registrations (adversarial R1): form 
   env.ble(...env.q.shift()); // the 107 is local and arrives within the second
   env.ble(0, 101); env.ble(0, 100); // a short drop, and the system reconnects
   env.step(40);
-  eq(JSON.stringify(env.regs()), '[1,2]', 'form 2 registered after the flap, form 1 not twice (form 2 was never registered)');
+  eq(JSON.stringify(env.regs()), '[1,1,2]', 'form 2 registered after the flap (it was never registered), form 1 again as after any reconnect');
   eq(env.state('ls'), 2, 'LIVE (was CONNECTING for the rest of the session)');
   eq(JSON.stringify(env.enas()), '[1,2]', 'form 1 first, the 16-byte form after 10 silent ticks');
   oneCallPerTick(env);
@@ -1984,7 +1988,7 @@ test('M2 memory (sp-mem, Duktape 2.7): every compiled function <= 1,900 B est32,
     ok(!x.st.walk.appTopBlocks.some((b) => b[2] === 'scopes'), k + ': no scope record among the largest blocks (smallest listed: ' + x.st.walk.appTopBlocks[x.st.walk.appTopBlocks.length - 1][0] + ' B)');
     ok(x.st.walk.appTopBlocks.length === 8 && x.st.walk.appTopBlocks[7][0] > 1100, k + ': the top-8 list reaches below a record with a hash part');
     eq(x.growth, 0, k + ': no live growth over the second half');
-    ok(x.garbage.every((g) => +g.split(':')[0] <= 3), k + ': cyclic garbage only on the setup ticks (ext2.js registrations): ' + x.garbage.join(' '));
+    ok(x.garbage.every((g) => +g.split(':')[0] <= 3 || (+g.split(':')[0] >= 104 && +g.split(':')[0] <= 106)), k + ': cyclic garbage only on the setup ticks (ext2.js registrations, again after the reconnect at tick 104): ' + x.garbage.join(' '));
   }
   ok(/ws=5\.\d+ wd=4\.7\d+/.test(res.xc.outs), 'the XC scenario estimates its 5 m/s wind from 270 deg (the fit ran): ' + (/ws=\S+ wd=\S+/.exec(res.xc.outs) || [''])[0]);
   // Regression caps at the measured values (SPEC §0.1.9). Neither meets the binding BLE display budget (steady

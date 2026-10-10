@@ -153,10 +153,10 @@ var ble = (function () {
     //@dbg if (ev < 0) { systemEvent('[vl] ' + ls + ' ' + nOk + ' ' + nBad + ' ' + nMax + ' ' + ph + ' ' + bs + ' ' + rg + ' ' + fm + ' ' + air + ' ' + XC[0] + ' ' + XC[1] + ' ' + XC[2] + ' ' + XC[13]); return; }
     if (ev) {
       switch (ev) {
-        case 100: // connected (again): registration from form 1 (the step skips the forms that already have a 107 or
-          // a failure mark, so a link flap during setup cannot skip one), then notifications on the form that worked
-          // last; a pending connect back-off (up to 60 ticks) must not hold up the setup of this link
-          conn = wasConn = 1; everValid = got = wt = nf = rT = 0;
+        case 100: // connected (again): the UUID forms are registered anew (Race S 2026-10-10: after a 101/100 the old
+          // registration is gone and enaCharNotf only gets 110; a form marked failed stays skipped), then notifications
+          // on the form that worked last; a pending connect back-off (up to 60 ticks) must not hold up this setup
+          conn = wasConn = 1; everValid = got = wt = nf = rT = rg = 0;
           bs = 1;
           break;
         case 101: // disconnected: the system reconnects by itself; no appConn call until the next 100, but a connect
